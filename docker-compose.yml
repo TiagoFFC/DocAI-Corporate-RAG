@@ -1,0 +1,38 @@
+version: "3.8"
+
+services:
+  # Servidor Ollama rodando direto dentro do Docker
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    restart: unless-stopped
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_models:/root/.ollama
+    # Suporte a GPU NVIDIA caso o Docker Desktop WSL2 esteja com GPU habilitada:
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+  # Aplicação Web DocAI (Streamlit + RAG)
+  docai-chatbot:
+    build: .
+    container_name: docai-chatbot
+    restart: unless-stopped
+    ports:
+      - "8501:8501"
+    environment:
+      - OLLAMA_BASE_URL=http://ollama:11434
+    volumes:
+      - ./documentos:/app/documentos
+      - ./chroma_db:/app/chroma_db
+    depends_on:
+      - ollama
+
+volumes:
+  ollama_models:

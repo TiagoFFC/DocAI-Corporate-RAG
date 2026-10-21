@@ -1,0 +1,61 @@
+﻿[Title of the Paper in English]
+[Título do Trabalho em Português]
+Jorge Werner
+Unisul
+Dib Mussi
+Florianópolis, SC, Brasil
+jorge.werner@unisul.br
+[Nome Completo do Segundo Autor]
+[Instituição do Autor]
+[Endereço]
+[Cidade], [Estado], [País]
+[email@instituicao.br]
+ABSTRACT
+[Write here a concise abstract (up to approximately 250 words) describing the problem addressed, the objective of the work, the methodology employed, the main results obtained, and the contribution of the study. For an Extended Abstract, indicate that the work is in progress and highlight expected or preliminary results.]
+KEYWORDS
+[Keyword 1], [Keyword 2], [Keyword 3], [Keyword 4]
+1 INTRODUÇÃO
+[Texto da introdução...]
+2 FUNDAMENTAÇÃO TEÓRICA
+[Texto da fundamentação teórica ou trabalhos relacionados...]
+2.1 [Subseção, se necessário]
+[Texto...]
+3 MATERIAIS E MÉTODOS
+[Texto sobre materiais e métodos...]
+A relação entre as variáveis do modelo pode ser expressa conforme a Equação (1):
+ŷ(k) = wT(k)x(k) + e(k)(1)
+em que ŷ(k) representa a saída estimada no instante k, w(k) é o vetor de pesos do modelo, x(k) é o vetor de entradas (features) e e(k) é o erro de estimação. Para equações mais simples ou auxiliares, sem necessidade de referência posterior, pode-se utilizar uma equação não numerada, como em:
+EQM = 1Nk=1N(y(k) - ŷ(k))2 .
+3.1 [Subseção, se necessário]
+[Texto...]
+4 RESULTADOS
+[Texto sobre os resultados obtidos ou esperados...]
+A Figura 1 ilustra um exemplo de resultado obtido durante os experimentos.
+Figura 1: Exemplo de figura com legenda descritiva, indicando claramente o que está sendo apresentado.
+Tabela 1: Comparação de desempenho entre os métodos avaliados.
+Método
+Métrica A (%)
+Métrica B (s)
+Método 1
+35,77
+84,2
+Método 2
+3,65
+12,4
+5 DISCUSSÃO
+Estudos anteriores mostraram resultados relevantes para o problema abordado [1, 2]. Cada referência citada no texto deve constar na lista de referências ao final do artigo, e vice-versa: toda referência listada deve ser citada pelo menos uma vez no corpo do texto.
+[Texto de discussão...]
+6 CONCLUSÕES E TRABALHOS FUTUROS
+[Texto de conclusão...]
+6.1 Trabalhos Futuros
+[Texto sobre trabalhos futuros...]
+AGRADECIMENTOS
+[Na versão de avaliação: “Agradecimentos omitidos para fins de avaliação cega.” Na versão final: inclua aqui os agradecimentos completos.]
+DECLARAÇÃO DE USO DE INTELIGÊNCIA ARTIFICIAL
+[Descreva aqui, de forma objetiva, se e como ferramentas de Inteligência Artificial generativa foram utilizadas na elaboração deste trabalho, indicando a(s) ferramenta(s) utilizada(s) e as etapas do trabalho em que foram empregadas. Os autores declaram ter revisado integralmente o conteúdo gerado e assumem total responsabilidade pela precisão, originalidade e integridade científica do trabalho. Caso nenhuma ferramenta de IA generativa tenha sido utilizada, declare explicitamente: “Os autores declaram que nenhuma ferramenta de Inteligência Artificial generativa foi utilizada na elaboração deste trabalho.”]
+REFERÊNCIAS
+[1] S. Haykin. 2014. Adaptive Filter Theory (5th ed.). Prentice Hall, Upper Saddle River.
+[2] R. E. Kalman. 1960. A New Approach to Linear Filtering and Prediction Problems. Journal of Basic Engineering 82, 1 (1960), 35–45.
+[3] A. B. Silva, C. D. Souza. 2026. Título do Trabalho Apresentado no Evento. In Anais do XVII Computer on the Beach. Balneário Camboriú, SC, 100–108.
+[4] E. F. Oliveira. 2025. Título da Tese ou Dissertação. Tese de Doutorado. Nome da Universidade.
+[5] World Health Organization. 2019. Epilepsy: Key Facts. Disponível em: https://www.who.int/news-room/fact-sheets/detail/epilepsy. Acesso em: 20 ago. 2026.

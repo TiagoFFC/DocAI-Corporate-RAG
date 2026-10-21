@@ -1,0 +1,30 @@
+# MANUAL DE TI, EQUIPAMENTOS E POLÍTICA DE SEGURANÇA DA INFORMAÇÃO
+EMPRESA EXEMPLO S.A. | DIRETORIA DE TECNOLOGIA E OPERAÇÕES
+
+1. OBJETIVO
+Definir as responsabilidades dos colaboradores quanto ao uso aceitável dos ativos computacionais corporativos, dispositivos fornecidos pela empresa e boas práticas de segurança da informação.
+
+2. ENTREGA E MANUTENÇÃO DE EQUIPAMENTOS
+2.1. Todo novo colaborador recebe em seu onboarding um notebook corporativo Dell Latitude ou Apple MacBook (conforme perfil da função), carregador original, mouse ergonômico e headset.
+2.2. A responsabilidade pela guarda, zelo e integridade física dos equipamentos é exclusiva do colaborador enquanto perdurar o vínculo empregatício.
+2.3. Em caso de furto ou roubo do equipamento, é obrigatório:
+    - Registrar Boletim de Ocorrência (B.O.) policial no prazo máximo de 24 horas;
+    - Notificar imediatamente o time de TI pelo e-mail security@empresa.com.br;
+    - Abrir chamado no portal ServiceDesk anexando a cópia do B.O. para envio de máquina reserva.
+
+3. POLÍTICA DE SENHAS E AUTENTICAÇÃO
+3.1. Todos os acessos a sistemas internos devem utilizar obrigatoriamente Autenticação Multifator (MFA) via Microsoft Authenticator ou Google Authenticator.
+3.2. As senhas corporativas devem conter:
+    - Mínimo de 12 (doze) caracteres;
+    - Pelo menos uma letra maiúscula, uma minúscula, um número e um caractere especial;
+    - Não conter nomes próprios, sequências óbvias ou partes do nome da empresa.
+3.3. As senhas expiram compulsoriamente a cada 90 (noventa) dias.
+
+4. TRABALHO REMOTO E POLÍTICA DE BACKUP
+4.1. Conexão Externa: É estritamente proibido acessar a rede interna corporativa através de redes Wi-Fi públicas desprotegidas (aeroportos, cafés, shoppings) sem o uso obrigatório da VPN corporativa homologada (FortiClient VPN).
+4.2. Armazenamento de Arquivos: Todos os arquivos de trabalho devem ser salvos exclusivamente no repositório em nuvem OneDrive Corporativo ou Google Drive Empresarial. É proibido armazenar documentos de projetos na área de trabalho local (Desktop) ou em pendrives particulares.
+4.3. Instalação de Softwares: O usuário não possui privilégios de administrador local no sistema operacional. Qualquer software ou extensão necessária ao trabalho deve ser solicitada formalmente via catálogo de serviços do ServiceDesk de TI.
+
+5. HORÁRIO DE ATENDIMENTO DO SUPORTE DE TI
+5.1. O ServiceDesk opera em regime padrão de segunda a sexta-feira, das 08h00 às 18h00, via chamado no portal ou pelo ramal interno 4004.
+5.2. Para incidentes críticos fora do horário comercial (sistema fora do ar, indisponibilidade total de faturamento), deve ser acionado o plantão de TI pelo telefone de emergência indicado na Intranet.
