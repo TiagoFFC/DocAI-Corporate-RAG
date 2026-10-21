@@ -15,11 +15,11 @@ SYSTEM_PROMPT = """Você é o Assistente Virtual Corporativo (DocAI) de uma empr
 Sua missão é responder à dúvida do colaborador baseando-se ESTRITAMENTE nos trechos de documentos fornecidos no contexto abaixo.
 
 REGRAS OBRIGATÓRIAS DE RESPOSTA:
-1. Responda APENAS com base nos trechos fornecidos no CONTEXTO.
-2. Se a informação solicitada NÃO estiver expressamente presente nos documentos fornecidos, diga educadamente:
+1. Responda APENAS com base nos trechos fornecidos no CONTEXTO. Se a pergunta contiver múltiplos itens (ex: prazo de antecedência e venda de dias), responda a cada item com base nas cláusulas correspondentes presentes no contexto.
+2. Se a informação solicitada (ou parte dela) NÃO constar expressamente nos documentos fornecidos, indique com precisão o que consta e, para o que não constar, informe educadamente:
    "Essa informação não consta nas políticas e manuais internos disponíveis na minha base. Recomendo abrir um chamado junto ao setor responsável (Gente & Gestão ou TI)."
 3. NUNCA invente, presuma, extrapole ou deduza regras que não estejam escritas no texto.
-4. Sempre mencione o nome do documento e a seção/cláusula relevante (por exemplo: "Conforme a Política Corporativa de Férias, cláusula 3.1...").
+4. Sempre mencione o nome do documento fonte e o número da seção ou cláusula relevante onde a regra está escrita.
 5. Mantenha um tom profissional, cordial, claro e objetivo em português do Brasil.
 
 ---
@@ -129,6 +129,11 @@ class RAGEngine:
 
         # Vetorização e gravação no ChromaDB
         embeddings = self.get_embeddings()
+        if self.vectorstore is not None:
+            try:
+                self.vectorstore.delete_collection()
+            except Exception:
+                pass
         self.vectorstore = Chroma.from_documents(
             documents=chunks,
             embedding=embeddings,
@@ -143,7 +148,7 @@ class RAGEngine:
             "message": f"{len(supported_files)} documentos indexados com sucesso em {len(chunks)} trechos vetoriais!"
         }
 
-    def ask(self, question: str, k: int = 4, temperature: float = 0.1) -> Dict[str, Any]:
+    def ask(self, question: str, k: int = 5, temperature: float = 0.1) -> Dict[str, Any]:
         """Realiza a busca vetorial por similaridade e gera a resposta com citação."""
         if not self.vectorstore:
             loaded = self.load_existing_vectorstore()
@@ -154,8 +159,17 @@ class RAGEngine:
                     "context": ""
                 }
 
-        # Busca os 'k' trechos mais similares
-        docs_with_scores = self.vectorstore.similarity_search_with_score(question, k=k)
+        # Busca candidatos e deduplica trechos redundantes para garantir diversidade de cláusulas
+        raw_docs = self.vectorstore.similarity_search_with_score(question, k=max(k * 2, 8))
+        seen_texts = set()
+        docs_with_scores = []
+        for doc, score in raw_docs:
+            text_norm = " ".join(doc.page_content.split())[:120]
+            if text_norm not in seen_texts:
+                seen_texts.add(text_norm)
+                docs_with_scores.append((doc, score))
+            if len(docs_with_scores) >= k:
+                break
 
         # Montagem do contexto textual para o prompt
         context_parts = []
