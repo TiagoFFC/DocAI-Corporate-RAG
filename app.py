@@ -93,7 +93,7 @@ with st.sidebar:
 
     model_name = st.selectbox(
         "Modelo LLM:",
-        ["llama3.2:3b", "llama3.1:8b", "qwen2.5:7b", "mistral:7b"],
+        ["llama3.1:8b", "llama3.2:3b", "qwen2.5:7b", "mistral:7b"],
         index=0
     )
     
