@@ -20,9 +20,11 @@ Leia este arquivo antes de alterar qualquer coisa. Ele vale para qualquer agente
 | `scripts/verify_docx.py` | Auditoria do artigo + paridade Word × Markdown | Sim |
 | `scripts/docx_to_md.py` | Gera `Artigo/ARTIGO_DOCAI.md` a partir do Word | Sim |
 | `scripts/benchmark_latency.py` | Mede latência por modelo | Sim |
+| `scripts/capture_interface.py` | Captura a tela real do app (Figura 1) com Playwright | Sim |
 | `scripts/fill_docx.py` | Histórico: script que preencheu o template. **Não reexecute** (sobrescreve o artigo) | Não |
 | `Artigo/Artigo - Chatbot.docx` | Artigo oficial — **fonte única da verdade** | Só a pedido dos autores |
 | `Artigo/ARTIGO_DOCAI.md` | Transcrição gerada do Word | **Nunca à mão** |
+| `Artigo/Artigo - Chatbot.pdf` | PDF exportado do Word (LibreOffice + fonte Linux Libertine) | Regerar após mudar o Word |
 | `Artigo/Artigo - Chatbot_original.docx` | Template original em branco | Não |
 | `docs/HISTORICO_PROJETO.md` | Histórico executivo e changelog | Sim |
 
@@ -69,7 +71,7 @@ A coleção é criada com `hnsw:space = cosine` e `retrieve()` converte distânc
 
 ### 3. O Word manda no Markdown
 
-Mudou o artigo? Edite o `.docx`, rode `python scripts/docx_to_md.py` e depois `python scripts/verify_docx.py "Artigo/Artigo - Chatbot.docx"` (deve sair com código 0). Não edite números do artigo (latências, tabela) sem autorização dos autores.
+Mudou o artigo? Edite o `.docx`, rode `python scripts/docx_to_md.py`, exporte o PDF novamente e depois `python scripts/verify_docx.py "Artigo/Artigo - Chatbot.docx"` (deve sair com código 0). Não edite números do artigo (latências, tabela) sem autorização dos autores.
 
 ### 4. Nada sai da máquina
 

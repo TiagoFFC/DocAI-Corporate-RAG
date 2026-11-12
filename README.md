@@ -5,7 +5,7 @@
 > **Artigo científico e prova de conceito (MVP)**
 > **Autores**: Tiago A. Ventura e Jorge Werner (orientador)
 > **Instituição**: Unisul — Universidade do Sul de Santa Catarina, curso de Análise e Desenvolvimento de Sistemas
-> **Artigo (Word, template SBC/Unisul)**: [Artigo/Artigo - Chatbot.docx](Artigo/Artigo%20-%20Chatbot.docx) · **Markdown**: [Artigo/ARTIGO_DOCAI.md](Artigo/ARTIGO_DOCAI.md)
+> **Artigo (Word, template SBC/Unisul)**: [Artigo/Artigo - Chatbot.docx](Artigo/Artigo%20-%20Chatbot.docx) · **PDF**: [Artigo/Artigo - Chatbot.pdf](Artigo/Artigo%20-%20Chatbot.pdf) · **Markdown**: [Artigo/ARTIGO_DOCAI.md](Artigo/ARTIGO_DOCAI.md)
 > **Histórico do projeto**: [docs/HISTORICO_PROJETO.md](docs/HISTORICO_PROJETO.md) · **Guia para agentes de IA**: [AGENTS.md](AGENTS.md)
 
 ---
@@ -238,11 +238,12 @@ DocAI/
 ├── Apresentação/               # Roteiro de pitch e levantamento de viabilidade
 ├── Artigo/
 │   ├── Artigo - Chatbot.docx   # Artigo oficial (fonte única da verdade)
+│   ├── Artigo - Chatbot.pdf    # PDF exportado do Word
 │   ├── ARTIGO_DOCAI.md         # Transcrição gerada do Word (não editar à mão)
 │   └── figura1_interface_docai.png
 ├── docs/HISTORICO_PROJETO.md   # Histórico executivo e changelog
 ├── documentos/                 # Políticas e manuais (corpus do RAG)
-├── scripts/                    # verify_docx, docx_to_md, benchmark_latency
+├── scripts/                    # verify_docx, docx_to_md, benchmark_latency, capture_interface
 ├── tests/                      # Suíte automatizada do pipeline RAG
 ├── app.py                      # Interface Streamlit
 ├── rag_engine.py               # Motor RAG e trava anti-alucinação

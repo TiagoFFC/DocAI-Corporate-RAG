@@ -116,6 +116,7 @@ Limite conhecido: a guarda é uma heurística por expressões regulares. Ela gar
 - **Trava anti-alucinação reforçada**: constante `REFUSAL_MESSAGE`, instrução explícita de responder somente com a recusa, e guarda determinística pós-geração.
 - **Motor refatorado**: `load_and_split()` e `retrieve()` separados de `index_directory()` e `ask()`; parâmetro `seed` para respostas reprodutíveis.
 - **Artigo**: `ARTIGO_DOCAI.md` passou a ser gerado do Word por `scripts/docx_to_md.py`. A versão anterior do Markdown era um texto mais longo que divergia do documento oficial (seções extras, tabela com colunas diferentes); ela permanece no histórico do Git (commit `4acb4f0`). `scripts/verify_docx.py` agora verifica a paridade e retorna código de saída 1 em caso de pendência.
+- **Artigo, correções de template**: o cabeçalho ainda trazia o placeholder "[Sobrenome do Primeiro Autor] et al." (agora "Werner e Ventura") e a Figura 1 era a imagem de exemplo do template; foi substituída por uma captura real da interface (`scripts/capture_interface.py`). A auditoria passou a verificar cabeçalhos, rodapés e a figura. PDF exportado em `Artigo/Artigo - Chatbot.pdf`.
 - **Governança**: `.gitignore`, `.env.example`, `.dockerignore`, `requirements-dev.txt`, CI no GitHub Actions; `chroma_db/` saiu do versionamento por ser artefato gerado.
 - **Documentação**: README reescrito, `AGENTS.md` do projeto, este histórico.
 

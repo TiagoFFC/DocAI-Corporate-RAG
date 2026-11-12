@@ -31,7 +31,22 @@ for t in doc.tables:
         for cell in row.cells:
             all_text.append(cell.text)
 
+# Cabeçalhos e rodapés também carregam placeholders do template
+for section in doc.sections:
+    for part in (section.header, section.first_page_header, section.even_page_header,
+                 section.footer, section.first_page_footer, section.even_page_footer):
+        all_text.extend(p.text for p in part.paragraphs)
+
 full_content = "\n".join(all_text)
+
+
+def image_blobs(document):
+    return [rel.target_part.blob for rel in document.part.rels.values() if "image" in rel.reltype]
+
+
+template_path = doc_path.parent / "Artigo - Chatbot_original.docx"
+template_images = image_blobs(docx.Document(str(template_path))) if template_path.exists() else []
+figure_is_real = bool(image_blobs(doc)) and not any(b in template_images for b in image_blobs(doc))
 
 print(f"Documento auditado: {doc_path}")
 print(f"Total lines extracted: {len(all_text)}")
@@ -69,6 +84,8 @@ checks = {
     "Título em Inglês": "DocAI: An Intelligent Corporate Assistant" in full_content,
     "Título em Português": "DocAI: Assistente Corporativo Inteligente" in full_content,
     "Similaridade de Cossenos (Eq. 1)": "S_C(q, d) = (q · d) / (||q|| ||d||)" in full_content and "(1)" in full_content,
+    "Cabeçalho com sobrenomes dos autores": "Werner e Ventura" in full_content,
+    "Figura 1 é captura real (não a imagem de exemplo do template)": figure_is_real,
     "Tabela 1 - legenda": "Tabela 1:" in full_content,
     "Tabela 1 - Llama 3.2 (3B) com latência 1,42 s": table_row_has("Llama 3.2 (3B)", "1,42 s"),
     "Tabela 1 - Llama 3.1 (8B) com latência 3,65 s": table_row_has("Llama 3.1 (8B)", "3,65 s"),
