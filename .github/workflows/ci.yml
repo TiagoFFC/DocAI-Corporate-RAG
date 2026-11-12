@@ -1,0 +1,23 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  offline-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Instalar dependências
+        run: pip install -r requirements-dev.txt
+      - name: Auditoria do artigo (Word x Markdown)
+        run: python scripts/verify_docx.py "Artigo/Artigo - Chatbot.docx"
+      # Os testes marcados com "ollama" exigem GPU/modelos locais e rodam fora do CI.
+      - name: Testes offline do pipeline RAG
+        run: python -m pytest tests/ -m "not ollama"

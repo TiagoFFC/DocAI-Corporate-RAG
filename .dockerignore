@@ -1,0 +1,15 @@
+.git
+.github
+.agents
+.superpowers
+.venv
+venv
+__pycache__
+*.pyc
+chroma_db
+scratch
+tests
+docs
+Artigo
+Apresentação
+.env

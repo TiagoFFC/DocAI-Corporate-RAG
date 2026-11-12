@@ -1,124 +1,269 @@
-# DocAI: Assistente Virtual Corporativo com IA Local (RAG)
+# DocAI: Assistente Corporativo Inteligente com RAG Local
 
-> **Artigo Científico & Prova de Conceito (MVP)**  
-> **Autores**: Tiago A. Ventura e Jorge Werner  
-> **Instituição**: Unisul — Universidade do Sul de Santa Catarina (Curso de Análise e Desenvolvimento de Sistemas)  
-> 📄 **Artigo Completo em Word (Template Unisul/SBC)**: [Artigo/Artigo - Chatbot.docx](file:///d:/Projetos/Chatbot/Artigo/Artigo%20-%20Chatbot.docx)  
-> 📝 **Versão em Markdown para Leitura Rápida**: [Artigo/ARTIGO_DOCAI.md](file:///d:/Projetos/Chatbot/Artigo/ARTIGO_DOCAI.md)  
+[![CI](https://github.com/TiagoFFC/DocAI-Corporate-RAG/actions/workflows/ci.yml/badge.svg)](https://github.com/TiagoFFC/DocAI-Corporate-RAG/actions/workflows/ci.yml)
 
----
-
-## 📌 Visão Geral do Projeto
-
-O **DocAI** é um assistente virtual corporativo inteligente baseado na arquitetura **RAG (*Retrieval-Augmented Generation*)** com operação **100% local (on-premises)**. O sistema resolve dois desafios fundamentais enfrentados pelas organizações modernas:
-
-1. **Eficiência e Produtividade**: Elimina o tempo gasto pelos colaboradores navegando manualmente em dezenas de manuais de RH, TI e políticas internas extensas.
-2. **Privacidade Absoluta e Soberania de Dados (Zero Vazamento)**: Ao executar modelos de linguagem abertos localmente (`llama3.2:3b` e `llama3.1:8b`) integrados ao banco vetorial `ChromaDB`, nenhum dado confidencial, segredo de negócio ou informação de colaborador trafega para servidores de terceiros ou nuvens públicas, garantindo conformidade com a **LGPD (Lei nº 13.709/2018)** e governança de TI.
-3. **Mitigação Rigorosa de Alucinações**: O modelo possui diretrizes estritas no prompt de sistema (*grounding*) e se recusa categoricamente a inventar respostas sobre informações que não estejam documentadas na base.
+> **Artigo científico e prova de conceito (MVP)**
+> **Autores**: Tiago A. Ventura e Jorge Werner (orientador)
+> **Instituição**: Unisul — Universidade do Sul de Santa Catarina, curso de Análise e Desenvolvimento de Sistemas
+> **Artigo (Word, template SBC/Unisul)**: [Artigo/Artigo - Chatbot.docx](Artigo/Artigo%20-%20Chatbot.docx) · **Markdown**: [Artigo/ARTIGO_DOCAI.md](Artigo/ARTIGO_DOCAI.md)
+> **Histórico do projeto**: [docs/HISTORICO_PROJETO.md](docs/HISTORICO_PROJETO.md) · **Guia para agentes de IA**: [AGENTS.md](AGENTS.md)
 
 ---
 
-## 🚀 Arquitetura Técnica
+## 1. Visão geral
 
-```
-  [ Colaborador / Interface Web Streamlit ] (Porta 8501)
-                     │
-                     ▼
-        [ Orquestrador LangChain ]
-         ├── RecursiveCharacterTextSplitter (chunk: 700, overlap: 120)
-         ├── Similaridade de Cossenos S_C(q, d)
-         └── System Prompt com Trava Anti-Alucinação
-                     │
-         ┌───────────┴───────────┐
-         ▼                       ▼
- [ ChromaDB Local ]      [ Ollama Container ] (Porta 11434)
- (./chroma_db)           ├── nomic-embed-text (Embeddings)
-                         └── llama3.2:3b / llama3.1:8b (LLM)
-```
+**Missão**: responder dúvidas de colaboradores sobre políticas internas (RH, benefícios, TI) usando apenas os documentos da empresa, citando fonte e cláusula, sem enviar nenhum dado para fora da rede.
 
-- **Interface**: `Streamlit` (Dashboard corporativo com chat reativo, métricas de latência e citação auditável de fontes).
-- **Orquestração RAG**: `LangChain` com divisores semânticos e cadeias de prompt restrito.
-- **Banco Vetorial**: `ChromaDB` persistido localmente em `./chroma_db`.
-- **Embeddings**: `nomic-embed-text` (Ollama).
-- **LLM Local**: `llama3.2:3b` (ultrarrápido, ~1,4s) e `llama3.1:8b` (alta densidade sintática, ~3,6s).
-- **Containerização**: `Docker` e `Docker Compose`.
+O DocAI resolve três problemas:
+
+1. **Produtividade**: o colaborador pergunta em linguagem natural em vez de procurar em manuais extensos.
+2. **Privacidade (LGPD)**: modelo de linguagem, embeddings e base vetorial rodam localmente. Não há API externa nem chave de API.
+3. **Alucinação**: perguntas fora da base recebem uma recusa padronizada, nunca uma resposta inventada.
+
+| Camada | Tecnologia |
+| --- | --- |
+| Interface | Streamlit (porta 8501) |
+| Orquestração RAG | LangChain |
+| Base vetorial | ChromaDB, métrica de cosseno, persistida em `./chroma_db` |
+| Embeddings | `nomic-embed-text` (Ollama) |
+| LLM | `llama3.1:8b` (padrão) e `llama3.2:3b` (Ollama, porta 11434) |
+| Empacotamento | Docker e Docker Compose |
+| Linguagem | Python 3.11 |
 
 ---
 
-## 🛠️ Como Executar a Aplicação
+## 2. Instalação rápida
 
-Como o projeto está totalmente orquestrado em **Docker Compose**, não é necessário configurar o Python ou o Ollama no sistema operacional hospedeiro.
+### Opção A — Docker Compose (recomendada)
 
-### 1. Iniciar os Containers (Ollama + DocAI)
-No terminal PowerShell:
-```powershell
+Pré-requisitos: Docker Desktop. Uma GPU NVIDIA com cerca de 12 GB de VRAM é recomendada; sem GPU, remova o bloco `deploy:` do `docker-compose.yml` (as respostas ficam bem mais lentas).
+
+```bash
+# 1. Subir Ollama + DocAI
 docker compose up -d --build
+
+# 2. Baixar os modelos (apenas na primeira vez; cerca de 7 GB)
+docker exec ollama ollama pull nomic-embed-text
+docker exec ollama ollama pull llama3.1:8b
+docker exec ollama ollama pull llama3.2:3b
 ```
 
-### 2. Acessar a Interface
-Abra no navegador:
-👉 **[http://localhost:8501](http://localhost:8501)**
+3. Abra **http://localhost:8501**.
+4. Na barra lateral, clique em **⚡ Indexar Documentos no ChromaDB** (necessário na primeira execução e sempre que os documentos mudarem).
+
+Para mudar portas, copie `.env.example` para `.env` e ajuste.
+
+### Opção B — Manual com Python e venv
+
+Pré-requisitos: Python 3.11 e [Ollama](https://ollama.com) instalado no sistema.
+
+```bash
+python -m venv .venv
+# Windows: .venv\Scripts\activate      Linux/macOS: source .venv/bin/activate
+pip install -r requirements.txt
+
+ollama pull nomic-embed-text
+ollama pull llama3.1:8b
+ollama pull llama3.2:3b
+
+streamlit run app.py
+```
 
 ---
 
-## 🎬 Roteiro de Demonstração Prática (Para a Banca e Apresentação)
+## 3. Arquitetura e fluxo de dados
 
-O DocAI foi projetado para permitir uma validação empírica clara e imediata perante o professor e avaliadores:
+```mermaid
+flowchart TD
+    U[Colaborador] -->|pergunta| UI[Streamlit - app.py]
+    UI --> ENG[RAGEngine - rag_engine.py]
 
-### Passo 1: Apresentação da Barra Lateral
-- Mostre o status de conexão ativa com o Ollama (`🔌 Testar`).
-- Destaque os 3 documentos regulatórios disponíveis em [documentos/](file:///d:/Projetos/Chatbot/documentos):
-  - `politica_de_ferias.txt` (regras CLT, antecedência e abono);
-  - `guia_de_beneficios.txt` (coparticipação e planos de saúde);
-  - `manual_ti_e_seguranca.txt` (procedimentos em caso de furto e senhas).
-- Demonstre o botão **`⚡ Indexar Documentos no ChromaDB`**, explicando a vetorização semântica em chunks de 700 caracteres.
+    subgraph Indexacao [Indexação - sob demanda]
+        DOCS[(documentos/ txt, md, pdf)] --> SPLIT[Chunking 700 / overlap 120]
+        SPLIT --> EMB1[nomic-embed-text]
+        EMB1 --> DB[(ChromaDB - cosseno)]
+    end
 
-### Passo 2: Execução das Consultas Empíricas (Botões Rápidos)
-1. **🏖️ 1. Regra de Férias e Abono**:
-   - Pergunta: *"Qual a antecedência mínima para solicitar férias e posso vender 10 dias?"*
-   - Observe a resposta instantânea citando a **cláusula 3.1** (antecedência de 30 dias) e **cláusula 5.1** (abono pecuniário de 1/3).
-   - Abra o expander *"🔍 Ver trechos e fontes recuperadas da base"* para auditar o score de similaridade e o texto exato.
-2. **🏥 2. Coparticipação Saúde**:
-   - Pergunta: *"Como funciona a coparticipação em consultas e exames no plano de saúde?"*
-   - O assistente recupera os valores exatos de consultas eletivas (R$ 35,00) e exames de alta complexidade (R$ 60,00).
-3. **💻 3. Furto de Notebook / TI**:
-   - Pergunta: *"O que devo fazer caso meu notebook corporativo seja roubado?"*
-   - O bot orienta o registro de B.O. em 24h e acionamento imediato da TI para bloqueio remoto.
-4. **⚠️ 4. Pegadinha (Trava de Alucinação - O Grande Destaque)**:
-   - Pergunta: *"Qual é o valor do bônus de Natal pago para estagiários?"*
-   - **Resultado do Bot**: *"Essa informação não consta nas políticas e manuais internos disponíveis na minha base. Recomendo abrir um chamado junto ao setor responsável (Gente & Gestão ou TI)."*
-   - **Ponto Alto da Demonstração**: Destaque ao professor que, diferentemente de IAs comuns que inventam valores plausíveis (alucinação), o DocAI respeita guardrails rígidos de governança.
+    subgraph Consulta [Consulta]
+        ENG -->|1. embedding da pergunta| EMB2[nomic-embed-text]
+        EMB2 -->|2. top-5 por similaridade de cossenos| DB
+        DB -->|3. trechos + fonte + score| PROMPT[System Prompt com contexto]
+        PROMPT -->|4. geração| LLM[llama3.1:8b / llama3.2:3b]
+        LLM -->|5. resposta bruta| GUARD[Guarda anti-alucinação]
+    end
 
----
-
-## 🔮 Trabalhos Futuros (Roteiro de Evolução Científica)
-
-Como evolução e expansão do projeto DocAI, propõem-se **quatro direções estratégicas**:
-
-1. **Validação Quantitativa do Sistema**: Implementação de um benchmark padronizado por meio de um conjunto de perguntas de referência (*ground truth*) e métricas objetivas baseadas na Tríade RAG (*precision* da recuperação, *faithfulness* da resposta e taxa de recusa em perguntas fora da base), com o objetivo de mensurar formalmente a mitigação de respostas não fundamentadas.
-2. **Expansão para Múltiplos Setores Organizacionais**: Escalonamento da solução para atender áreas corporativas distintas (RH, TI, Jurídico e Desenvolvimento de Software), com coleções segregadas no banco vetorial, metadados de controle de acesso e regras de resposta específicas por área, investigando o comportamento da arquitetura em corpora com blocos de código e sintaxes técnicas.
-3. **Fortalecimento dos Mecanismos de Segurança e Governança**: Incorporação de controle de acesso baseado em papéis (*Role-Based Access Control* - RBAC), trilha de auditoria criptografada e verificação formal de conformidade contínua com a LGPD.
-4. **Manutenção Contínua da Base e Estudos de Produtividade**: Análise de rotinas de versionamento e reindexação incremental de documentos (evitando reprocessamento total da base), complementada por estudos empíricos com colaboradores para quantificar o ganho de produtividade em horas economizadas e comparar diferentes modelos locais quanto a latência e consumo de hardware.
-
----
-
-## 📂 Estrutura de Arquivos do Repositório
+    GUARD -->|resposta + fontes + latência| UI
+    EMB1 -.-> OLLAMA[[Ollama local :11434]]
+    EMB2 -.-> OLLAMA
+    LLM -.-> OLLAMA
+```
 
 ```text
-d:/Projetos/Chatbot/
-├── Artigo/
-│   ├── Artigo - Chatbot.docx        # Artigo acadêmico preenchido no template oficial (Unisul/SBC)
-│   ├── ARTIGO_DOCAI.md              # Artigo acadêmico completo em formato Markdown
-│   └── Artigo - Chatbot_original.docx # Backup do template original
-├── app.py                           # Interface Web Streamlit com chat, métricas e auditoria
-├── rag_engine.py                    # Motor RAG com LangChain, ChromaDB e Ollama
-├── Dockerfile                       # Configuração da imagem do assistente
-├── docker-compose.yml               # Orquestração conjunta dos containers (Streamlit + Ollama)
-├── requirements.txt                 # Dependências Python do projeto
-├── README.md                        # Documentação executiva e roteiro de apresentação
-├── chroma_db/                       # Banco de vetores local persistido
-└── documentos/                      # Repositório de políticas e manuais internos
-    ├── politica_de_ferias.txt
-    ├── guia_de_beneficios.txt
-    └── manual_ti_e_seguranca.txt
+  [ Colaborador ] ──pergunta──▶ [ Streamlit · app.py · :8501 ]
+                                          │
+                                          ▼
+                             [ RAGEngine · rag_engine.py ]
+                               │                      │
+              1. embedding     │                      │  4. prompt + contexto
+              2. busca top-5   ▼                      ▼
+                     [ ChromaDB · ./chroma_db ]   [ Ollama · :11434 ]
+                       métrica: cosseno            ├─ nomic-embed-text
+                               │                   └─ llama3.1:8b / llama3.2:3b
+              3. trechos, fonte e score                 │
+                               └──────────┬─────────────┘
+                                          ▼
+                         5. Guarda anti-alucinação (determinística)
+                                          │
+                                          ▼
+                       resposta + fontes citadas + latência
+
+  Indexação:  documentos/*.txt|md|pdf ─▶ chunks (700/120) ─▶ embeddings ─▶ ChromaDB
 ```
+
+Parâmetros: chunks de 700 caracteres com sobreposição de 120 (21 trechos no corpus atual); recuperação dos 5 trechos mais similares após remover redundâncias; temperatura padrão 0,1. O score exibido é a similaridade de cossenos `S_C(q, d) = (q · d) / (||q|| ||d||)`, a Equação (1) do artigo.
+
+---
+
+## 4. Prompt de sistema e guardrails
+
+O prompt está em `SYSTEM_PROMPT`, em [rag_engine.py](rag_engine.py):
+
+```text
+Você é o Assistente Virtual Corporativo (DocAI) de uma empresa.
+Sua missão é responder à dúvida do colaborador baseando-se ESTRITAMENTE nos trechos
+de documentos fornecidos no contexto abaixo.
+
+REGRAS OBRIGATÓRIAS DE RESPOSTA:
+1. Responda APENAS com base nos trechos fornecidos no CONTEXTO. Se a pergunta contiver
+   múltiplos itens, responda a cada item com base nas cláusulas correspondentes.
+2. Se a informação solicitada (ou parte dela) NÃO constar expressamente nos documentos,
+   indique com precisão o que consta e, para o que não constar, informe:
+   "Essa informação não consta nas políticas e manuais internos disponíveis na minha base.
+   Recomendo abrir um chamado junto ao setor responsável (Gente & Gestão ou TI)."
+   Se NENHUMA parte da pergunta puder ser respondida com o contexto, responda SOMENTE
+   com essa frase.
+3. NUNCA invente, presuma, extrapole ou deduza regras que não estejam escritas no texto.
+4. Sempre mencione o nome do documento fonte e o número da seção ou cláusula.
+5. Mantenha um tom profissional, cordial, claro e objetivo em português do Brasil.
+
+CONTEXTO DOS DOCUMENTOS INTERNOS: {context}
+PERGUNTA DO COLABORADOR: {question}
+```
+
+Guardrails em vigor:
+
+| Guardrail | Onde | O que faz |
+| --- | --- | --- |
+| Grounding | `SYSTEM_PROMPT` | O modelo só pode usar os trechos recuperados |
+| Recusa padrão | `REFUSAL_MESSAGE` | Texto único e fixo para o que não está na base |
+| Guarda pós-geração | `apply_refusal_guard()` | Se a resposta sinaliza ausência e não cita documento nem cláusula, é substituída pela recusa exata. É código determinístico, não depende do modelo |
+| Citação obrigatória | Regra 4 do prompt | Documento e cláusula em toda resposta |
+| Auditabilidade | Interface | Trechos, arquivo de origem e score visíveis ao usuário |
+| Temperatura baixa | `ask(temperature=0.1)` | Reduz variação entre respostas |
+| Isolamento | Docker Compose | Nenhuma chamada externa |
+
+---
+
+## 5. Testes
+
+A suíte [tests/test_rag_pipeline.py](tests/test_rag_pipeline.py) tem 30 testes em 5 grupos:
+
+| Grupo | Valida |
+| --- | --- |
+| 1. Conectividade | Ollama responde e os três modelos estão instalados |
+| 2. Ingestão | Leitura dos três documentos, chunking e persistência no ChromaDB |
+| 3. Recuperação | Fonte e cláusula corretas no topo; score igual à fórmula do cosseno |
+| 4. Geração | Férias (cláusulas 3.1 e 5.1), coparticipação (R$ 35,00 e R$ 60,00), furto de notebook (B.O. em 24 h e aviso à TI) |
+| 5. Anti-alucinação | "Qual é o valor do bônus de Natal para estagiários?" retorna estritamente a recusa padrão, nos dois modelos |
+
+Os testes usam uma base vetorial temporária e não alteram `./chroma_db`.
+
+```bash
+pip install -r requirements-dev.txt
+
+python -m pytest tests/                   # suíte completa (exige Ollama com os modelos)
+python tests/test_rag_pipeline.py         # equivalente
+python -m pytest tests/ -m "not ollama"   # apenas os 10 testes offline (usado no CI)
+```
+
+Se o Python só existir dentro do Docker, rode a partir da raiz do projeto, com os containers no ar:
+
+```bash
+docker run --rm --network chatbot_default -e OLLAMA_BASE_URL=http://ollama:11434 \
+  -v "$PWD:/workspace" -w /workspace --entrypoint bash chatbot-docai-chatbot \
+  -c "pip install -q -r requirements-dev.txt && python -m pytest tests/"
+```
+
+Auditoria do artigo (placeholders, elementos obrigatórios e paridade Word × Markdown):
+
+```bash
+python scripts/verify_docx.py "Artigo/Artigo - Chatbot.docx"
+```
+
+Outros utilitários: `scripts/docx_to_md.py` regenera o Markdown a partir do Word; `scripts/benchmark_latency.py` mede a latência por modelo.
+
+---
+
+## 6. Roteiro de demonstração para a banca (4 passos)
+
+Antes de começar: suba os containers e faça uma pergunta qualquer para aquecer o modelo. A primeira resposta após a inicialização demora, pois carrega os pesos na GPU.
+
+**Passo 1 — Mostrar que é local.** Na barra lateral, clique em **🔌 Testar** (Ollama online) e aponte os três documentos em `documentos/`: `politica_de_ferias.txt`, `guia_de_beneficios.txt` e `manual_ti_e_seguranca.txt`.
+
+**Passo 2 — Indexar.** Clique em **⚡ Indexar Documentos no ChromaDB** e explique: os textos viram 21 trechos de até 700 caracteres, cada um convertido em vetor.
+
+**Passo 3 — Três perguntas respondidas com citação** (botões prontos na barra lateral). Em cada uma, abra **🔍 Ver trechos e fontes recuperadas** para mostrar o trecho e o score de similaridade.
+
+| Botão | Pergunta | Resposta esperada |
+| --- | --- | --- |
+| 🏖️ Férias e Abono | Qual a antecedência mínima para solicitar férias e posso vender 10 dias? | 30 dias corridos (cláusula 3.1); conversão de 1/3 em abono, equivalente a 10 dias (cláusula 5.1) |
+| 🏥 Coparticipação | Como funciona a coparticipação em consultas e exames no plano de saúde? | R$ 35,00 por consulta eletiva; R$ 60,00 por exame complexo (seção 2.5) |
+| 💻 Furto de Notebook | O que devo fazer caso meu notebook corporativo seja roubado? | Registrar B.O. em até 24 horas, avisar a TI em `security@empresa.com.br` e abrir chamado no ServiceDesk (cláusula 2.3) |
+
+**Passo 4 — A pegadinha (ponto alto).** Clique em **⚠️ Pegadinha** — *"Qual é o valor do bônus de Natal pago para estagiários?"*. O DocAI responde exatamente:
+
+> Essa informação não consta nas políticas e manuais internos disponíveis na minha base. Recomendo abrir um chamado junto ao setor responsável (Gente & Gestão ou TI).
+
+Destaque que um assistente genérico tenderia a inventar um valor plausível, e que aqui a recusa é garantida por código, não apenas pelo prompt.
+
+Use `llama3.1:8b` (padrão) na demonstração: o `llama3.2:3b` é mais rápido, mas erra a pergunta composta de férias.
+
+---
+
+## 7. Estrutura do repositório
+
+```text
+DocAI/
+├── .github/workflows/ci.yml    # CI: auditoria do artigo + testes offline
+├── Apresentação/               # Roteiro de pitch e levantamento de viabilidade
+├── Artigo/
+│   ├── Artigo - Chatbot.docx   # Artigo oficial (fonte única da verdade)
+│   ├── ARTIGO_DOCAI.md         # Transcrição gerada do Word (não editar à mão)
+│   └── figura1_interface_docai.png
+├── docs/HISTORICO_PROJETO.md   # Histórico executivo e changelog
+├── documentos/                 # Políticas e manuais (corpus do RAG)
+├── scripts/                    # verify_docx, docx_to_md, benchmark_latency
+├── tests/                      # Suíte automatizada do pipeline RAG
+├── app.py                      # Interface Streamlit
+├── rag_engine.py               # Motor RAG e trava anti-alucinação
+├── Dockerfile
+├── docker-compose.yml
+├── requirements.txt            # Dependências de produção
+├── requirements-dev.txt        # Dependências de testes e auditoria
+├── .env.example
+├── AGENTS.md                   # Regras para agentes de IA
+└── README.md
+```
+
+`chroma_db/` é criada pela indexação e não é versionada.
+
+---
+
+## 8. Limitações
+
+- O corpus são três documentos fictícios da "Empresa Exemplo S.A."; a validação é funcional, não um benchmark estatístico.
+- A latência depende do hardware e do tamanho da resposta. O artigo reporta 1,42 s (3B) e 3,65 s (8B); a medição de conferência desta versão está em [docs/HISTORICO_PROJETO.md](docs/HISTORICO_PROJETO.md).
+- A indexação recria a base inteira a cada execução.
+- Não há autenticação nem controle de acesso por perfil.
+
+Esses pontos correspondem às quatro direções de trabalhos futuros descritas no artigo.

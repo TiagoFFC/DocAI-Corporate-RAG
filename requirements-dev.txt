@@ -1,0 +1,4 @@
+# Dependências de testes e auditoria (não entram na imagem de produção)
+-r requirements.txt
+pytest>=8.0.0
+python-docx>=1.1.0

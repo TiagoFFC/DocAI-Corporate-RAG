@@ -1,0 +1,44 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# --- Ambientes virtuais ---
+.venv/
+venv/
+env/
+ENV/
+
+# --- Variáveis de ambiente locais (nunca versionar segredos) ---
+.env
+.env.*
+!.env.example
+
+# --- ChromaDB / SQLite: base vetorial é artefato gerado (reindexe pelo app) ---
+chroma_db/
+*.sqlite3
+*.sqlite3-journal
+*.sqlite3-wal
+*.sqlite3-shm
+
+# --- Arquivos ad-hoc de depuração (scripts oficiais ficam em scripts/) ---
+scratch/
+
+# --- Word: arquivos temporários/lock ---
+~$*.docx
+*.tmp
+
+# --- Sistema operacional / IDE ---
+.DS_Store
+Thumbs.db
+desktop.ini
+.idea/
+.vscode/
+
+# --- Estado local de ferramentas de agentes ---
+.superpowers/
