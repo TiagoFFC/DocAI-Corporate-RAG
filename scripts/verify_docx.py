@@ -102,6 +102,51 @@ def paragraph_with(*terms):
     return any(all(t in p for t in terms) for p in body_paragraphs)
 
 
+def section_text(start_heading, stop_headings):
+    """Texto dos parágrafos entre o título start_heading e o próximo título listado."""
+    out, inside = [], False
+    for p in doc.paragraphs:
+        is_heading = p.style.name.startswith("Heading")
+        title = p.text.strip().upper()
+        if is_heading and title == start_heading:
+            inside = True
+            continue
+        if inside and is_heading and any(title.startswith(s) for s in stop_headings):
+            break
+        if inside:
+            out.append(p.text)
+    return "\n".join(out)
+
+
+headings = [p.text.strip().upper() for p in doc.paragraphs if p.style.name.startswith("Heading")]
+resumo_text = section_text("RESUMO", ["PALAVRAS-CHAVE"])
+palavras_chave_text = section_text("PALAVRAS-CHAVE", ["1 "])
+portuguese_body = section_text("1 INTRODUÇÃO", ["REFERÊNCIAS"])
+
+# Termos em inglês que, no texto em português, só podem aparecer uma vez e entre
+# parênteses (glosa do original na 1ª ocorrência). Nomes próprios ficam de fora.
+ENGLISH_TERMS = [
+    "compliance", "Shadow AI", "on-premises", "fine-tuning", "Retrieval-Augmented Generation",
+    "System Prompt", "chunk size", "chunk overlap", "scores", "corpora", "tokens",
+]
+
+
+def bare_english_terms(text):
+    """Termos em inglês usados fora de glosa ou repetidos após a 1ª ocorrência."""
+    problems = []
+    for term in ENGLISH_TERMS:
+        pattern = re.escape(term)
+        total = len(re.findall(rf"\b{pattern}\b", text, re.IGNORECASE))
+        glossed = len(re.findall(rf"\([^()]*\b{pattern}\b[^()]*\)", text, re.IGNORECASE))
+        if total > 1 or total != glossed:
+            problems.append(f"{term} ({total}x, {glossed} entre parênteses)")
+    return problems
+
+
+bare_in_body = bare_english_terms(portuguese_body)
+bare_in_resumo = bare_english_terms(resumo_text + "\n" + palavras_chave_text)
+
+
 print("\n--- Verificação de Elementos Obrigatórios ---")
 checks = {
     "Autor Tiago A. Ventura": "Tiago A. Ventura" in full_content,
@@ -133,6 +178,12 @@ checks = {
     "Sem fórmula duplicada em notação crua": "∑_{" not in body_text and "^n" not in body_text,
     "Modelos com grafia editorial no texto (sem tags llama3.x:yb)": not re.search(r"llama3\.\d:\d+b", body_text),
     "Hardware de teste intacto (RTX 3060, 12GB)": "RTX 3060 (12GB VRAM)" in body_text,
+    "ABSTRACT e KEYWORDS em inglês mantidos (exigência do template)": "ABSTRACT" in headings and "KEYWORDS" in headings,
+    "RESUMO em português presente e não vazio": len(resumo_text) > 500,
+    "PALAVRAS-CHAVE em português presentes": len(palavras_chave_text.split(",")) >= 4,
+    "RESUMO vem antes da Introdução": "RESUMO" in headings and headings.index("RESUMO") < headings.index("1 INTRODUÇÃO"),
+    f"Corpo em português sem termos em inglês soltos ({'; '.join(bare_in_body) or 'nenhum'})": bool(portuguese_body) and not bare_in_body,
+    f"Resumo sem termos em inglês soltos ({'; '.join(bare_in_resumo) or 'nenhum'})": bool(resumo_text) and not bare_in_resumo,
 }
 
 print("\n--- Paridade Word x Markdown ---")
