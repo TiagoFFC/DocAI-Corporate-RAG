@@ -75,6 +75,33 @@ def table_row_has(*terms):
     return any(all(term in row for term in terms) for row in table_rows)
 
 
+# Corpo do artigo = parágrafos antes do título "REFERÊNCIAS"
+body_paragraphs = []
+reference_numbers = []
+in_references = False
+for p in doc.paragraphs:
+    if p.style.name.startswith("Heading") and p.text.strip().upper().startswith("REFERÊNCIAS"):
+        in_references = True
+        continue
+    if in_references:
+        m = re.match(r"^\[(\d+)\]", p.text.strip())
+        if m:
+            reference_numbers.append(int(m.group(1)))
+    else:
+        body_paragraphs.append(p.text)
+body_text = "\n".join(body_paragraphs)
+
+cited_numbers = set()
+for group in re.findall(r"\[(\d+(?:\s*,\s*\d+)*)\]", body_text):
+    cited_numbers.update(int(n) for n in re.split(r"\s*,\s*", group))
+orphan_references = [n for n in reference_numbers if n not in cited_numbers]
+
+
+def paragraph_with(*terms):
+    """True se algum parágrafo do corpo contém todos os termos."""
+    return any(all(t in p for t in terms) for p in body_paragraphs)
+
+
 print("\n--- Verificação de Elementos Obrigatórios ---")
 checks = {
     "Autor Tiago A. Ventura": "Tiago A. Ventura" in full_content,
@@ -98,6 +125,14 @@ checks = {
     "Agradecimentos Unisul": "Agradecimentos à Unisul" in full_content,
     "Declaração de Uso de IA": "ferramentas de Inteligência Artificial generativa foram utilizadas" in full_content,
     "Referências Bibliográficas": "P. Lewis, E. Perez" in full_content and "Lei nº 13.709" in full_content,
+    f"Nenhuma referência órfã (sem citação no corpo: {orphan_references or 'nenhuma'})": bool(reference_numbers) and not orphan_references,
+    "Citação [3] junto à família LLaMA 3": paragraph_with("LLaMA 3 da Meta [3]"),
+    "Citação [4] junto aos vetores densos": paragraph_with("vetores densos multidimensionais [4]"),
+    "Citação [5] junto à LGPD na Introdução": paragraph_with("Lei nº 13.709/2018) [5]"),
+    "Citação [5] junto à LGPD na Discussão": paragraph_with("conformidade nativa com a LGPD [5]"),
+    "Sem fórmula duplicada em notação crua": "∑_{" not in body_text and "^n" not in body_text,
+    "Modelos com grafia editorial no texto (sem tags llama3.x:yb)": not re.search(r"llama3\.\d:\d+b", body_text),
+    "Hardware de teste intacto (RTX 3060, 12GB)": "RTX 3060 (12GB VRAM)" in body_text,
 }
 
 print("\n--- Paridade Word x Markdown ---")
