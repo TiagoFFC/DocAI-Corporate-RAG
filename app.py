@@ -1,7 +1,8 @@
 import os
 import time
 import streamlit as st
-from rag_engine import RAGEngine
+from rag_engine import RAGEngine, safe_document_path
+from ui_helpers import source_box_html
 
 # Configuração da página
 st.set_page_config(
@@ -115,11 +116,18 @@ with st.sidebar:
     # Upload dinâmico opcional
     uploaded_files = st.file_uploader("Adicionar novo PDF ou TXT:", accept_multiple_files=True, type=["txt", "pdf", "md"])
     if uploaded_files:
+        saved = 0
         for uf in uploaded_files:
-            file_path = os.path.join(docs_folder, uf.name)
+            file_path = safe_document_path(docs_folder, uf.name)
+            if file_path is None:
+                st.warning(f"Arquivo rejeitado (nome ou extensão inválidos): `{uf.name}`")
+                continue
+            os.makedirs(docs_folder, exist_ok=True)
             with open(file_path, "wb") as f_out:
                 f_out.write(uf.getbuffer())
-        st.success(f"{len(uploaded_files)} arquivo(s) salvo(s)!")
+            saved += 1
+        if saved:
+            st.success(f"{saved} arquivo(s) salvo(s)!")
 
     # Botão de Indexação
     if st.button("⚡ Indexar Documentos no ChromaDB", type="primary", use_container_width=True):
@@ -200,7 +208,7 @@ for msg in st.session_state.messages:
             with st.expander("🔍 Ver trechos e fontes recuperadas da base"):
                 for idx, src in enumerate(msg["sources"], 1):
                     st.markdown(f"**Fonte {idx}: `{src['doc']}`** *(Score de similaridade: {src['score']})*")
-                    st.markdown(f'<div class="source-box">{src["content"]}</div>', unsafe_allow_html=True)
+                    st.markdown(source_box_html(src["content"]), unsafe_allow_html=True)
 
 # Captura pergunta enviada via caixa de texto ou pelos botões rápidos
 prompt_input = st.chat_input("Digite sua dúvida sobre as políticas internas...")
@@ -243,7 +251,7 @@ if user_question:
                 with st.expander("🔍 Ver trechos e fontes recuperadas da base"):
                     for idx, src in enumerate(sources, 1):
                         st.markdown(f"**Fonte {idx}: `{src['doc']}`** *(Score de similaridade: {src['score']})*")
-                        st.markdown(f'<div class="source-box">{src["content"]}</div>', unsafe_allow_html=True)
+                        st.markdown(source_box_html(src["content"]), unsafe_allow_html=True)
 
             # Salva no histórico
             st.session_state.messages.append({

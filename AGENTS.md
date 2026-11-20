@@ -61,7 +61,7 @@ Ela tem três partes em `rag_engine.py`, e as três devem continuar existindo:
 1. `REFUSAL_MESSAGE` — o texto exato da recusa:
    `Essa informação não consta nas políticas e manuais internos disponíveis na minha base. Recomendo abrir um chamado junto ao setor responsável (Gente & Gestão ou TI).`
 2. `SYSTEM_PROMPT` — regras 1 a 5 (responder só com o contexto; recusar o que não consta; nunca inventar; citar documento e cláusula; português formal).
-3. `apply_refusal_guard()` — guarda determinística pós-geração: se a resposta sinaliza ausência de informação e não cita nenhum documento-fonte nem cláusula numerada, ela é substituída por `REFUSAL_MESSAGE`.
+3. `apply_refusal_guard()` — guarda determinística pós-geração: se a resposta sinaliza ausência de informação e não cita nenhum documento-fonte nem cláusula numerada, ela é substituída por `REFUSAL_MESSAGE`. Com o contexto recuperado (`context=`/`question=`, repassados por `ask()`), a guarda também recusa respostas que citam cláusula inexistente nos trechos, documento fora das fontes recuperadas ou valor (R$, %, prazo) que não aparece nos trechos nem na pergunta. Números soltos como "1.5" não contam como cláusula: só vale "cláusula 3.1", "cláusulas 3.1 e 5.1" ou "(3.1)".
 
 Não altere o texto da recusa, não remova regras do prompt, não contorne a guarda e não eleve a temperatura padrão (0,1). Os testes `test_5_*` protegem esse comportamento: **nunca os afrouxe para fazer a suíte passar**. Se uma mudança legítima exigir novo texto de recusa, atualize junto: `rag_engine.py`, `tests/test_rag_pipeline.py`, `README.md`, este arquivo e o artigo.
 
@@ -116,5 +116,5 @@ Adicione o nome à lista do `st.selectbox` em `app.py`, faça `ollama pull` e ro
 
 - O corpus são 3 documentos fictícios da "Empresa Exemplo S.A."; a avaliação é funcional, não um benchmark estatístico.
 - `llama3.2:3b` erra a pergunta composta de férias (não associa "vender 10 dias" ao abono da cláusula 5.1). O modelo padrão e o dos testes de geração é `llama3.1:8b`.
-- A guarda pós-geração é heurística (expressões regulares): cobre recusas e negativas sem citação, não detecta um valor inventado que venha acompanhado de uma citação.
+- A guarda pós-geração é heurística (expressões regulares): cobre recusas e negativas sem citação e valores (R$, %, dias/horas/meses) ausentes do contexto. Não detecta afirmações inventadas sem número (ex.: uma regra qualitativa falsa citando uma cláusula real) e pode recusar respostas boas que formatem cláusulas ou valores de modo incomum.
 - O manual de TI **não** menciona "bloqueio remoto" do notebook; a resposta correta é B.O. em 24 h, avisar a TI (`security@empresa.com.br`) e abrir chamado no ServiceDesk.

@@ -103,7 +103,7 @@ Por isso `llama3.1:8b` é o modelo padrão do app e o usado nos testes de geraç
 5. **Auditabilidade**: a interface exibe os trechos recuperados, o arquivo de origem e o score de cada um.
 6. **Temperatura baixa** (0,1 por padrão; limite de 0,5 na interface).
 
-Limite conhecido: a guarda é uma heurística por expressões regulares. Ela garante a forma da recusa, mas não detecta um valor inventado que venha acompanhado de uma citação. Medir isso formalmente é a primeira direção de trabalhos futuros do artigo.
+Limite conhecido: a guarda é uma heurística por expressões regulares. Ela garante a forma da recusa e, com o contexto recuperado, rejeita cláusula/documento inexistente e valores (R$, %, prazos) ausentes dos trechos; não detecta afirmações qualitativas inventadas que citem uma cláusula real. Medir isso formalmente é a primeira direção de trabalhos futuros do artigo.
 
 ---
 

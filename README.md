@@ -156,7 +156,7 @@ Guardrails em vigor:
 | --- | --- | --- |
 | Grounding | `SYSTEM_PROMPT` | O modelo só pode usar os trechos recuperados |
 | Recusa padrão | `REFUSAL_MESSAGE` | Texto único e fixo para o que não está na base |
-| Guarda pós-geração | `apply_refusal_guard()` | Se a resposta sinaliza ausência e não cita documento nem cláusula, é substituída pela recusa exata. É código determinístico, não depende do modelo |
+| Guarda pós-geração | `apply_refusal_guard()` | Se a resposta sinaliza ausência e não cita documento nem cláusula, é substituída pela recusa exata; também é recusada a resposta que cita cláusula ou documento inexistente nos trechos recuperados ou traz valor (R$, %, prazo) que não consta neles. É código determinístico, não depende do modelo |
 | Citação obrigatória | Regra 4 do prompt | Documento e cláusula em toda resposta |
 | Auditabilidade | Interface | Trechos, arquivo de origem e score visíveis ao usuário |
 | Temperatura baixa | `ask(temperature=0.1)` | Reduz variação entre respostas |

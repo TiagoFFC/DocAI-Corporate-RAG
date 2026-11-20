@@ -14,6 +14,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Copia o código da aplicação
 COPY rag_engine.py .
+COPY ui_helpers.py .
 COPY app.py .
 COPY documentos/ ./documentos/
 
