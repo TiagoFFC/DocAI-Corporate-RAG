@@ -1,7 +1,7 @@
 import os
 import time
 import streamlit as st
-from rag_engine import RAGEngine
+from rag_engine import ACCESS_PROFILES, RAGEngine
 
 # Configuração da página
 st.set_page_config(
@@ -17,12 +17,13 @@ st.markdown("""
     .main-title {
         font-size: 2.2rem;
         font-weight: 700;
-        color: #1E3A8A;
+        color: var(--text-color);
         margin-bottom: 0.2rem;
     }
     .sub-title {
         font-size: 1.05rem;
-        color: #4B5563;
+        color: var(--text-color);
+        opacity: 0.8;
         margin-bottom: 1.5rem;
     }
     .metric-badge {
@@ -36,7 +37,8 @@ st.markdown("""
         margin-right: 0.5rem;
     }
     .source-box {
-        background-color: #F8FAFC;
+        background-color: var(--secondary-background-color);
+        color: var(--text-color);
         border-left: 4px solid #3B82F6;
         padding: 0.75rem;
         border-radius: 0.25rem;
@@ -98,6 +100,12 @@ with st.sidebar:
     )
     
     embedding_model = st.text_input("Modelo Embeddings:", value="nomic-embed-text")
+    selected_profile = st.selectbox(
+        "Perfil / Setor de Acesso:",
+        list(ACCESS_PROFILES.keys()),
+        index=0,
+    )
+    allowed_sectors = ACCESS_PROFILES[selected_profile]
 
     st.divider()
 
@@ -105,10 +113,10 @@ with st.sidebar:
     docs_folder = "./documentos"
     
     if os.path.exists(docs_folder):
-        files = os.listdir(docs_folder)
+        files = RAGEngine.list_documents(docs_folder)
         st.caption(f"📁 **Arquivos disponíveis ({len(files)}):**")
-        for f in files:
-            st.markdown(f"- 📄 `{f}`")
+        for doc in files:
+            st.markdown(f"- 📄 `[{doc['sector'].upper()}]` `{doc['relative_path']}`")
     else:
         st.warning("Pasta ./documentos não encontrada.")
 
@@ -182,6 +190,12 @@ if st.session_state.rag_engine is None:
     )
     # Tenta carregar base existente do disco
     st.session_state.rag_engine.load_existing_vectorstore()
+else:
+    st.session_state.rag_engine.sync_config(
+        ollama_url=ollama_url,
+        llm_model=model_name,
+        embedding_model=embedding_model,
+    )
 
 # Renderiza histórico de mensagens
 for msg in st.session_state.messages:
@@ -224,7 +238,8 @@ if user_question:
             t_start = time.time()
             result = st.session_state.rag_engine.ask(
                 question=user_question,
-                temperature=temperature
+                temperature=temperature,
+                allowed_sectors=allowed_sectors,
             )
             t_end = time.time()
             latency = t_end - t_start
