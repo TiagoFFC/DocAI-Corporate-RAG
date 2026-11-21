@@ -122,6 +122,8 @@ flowchart TD
 
 Parâmetros: chunks de 700 caracteres com sobreposição de 120 (21 trechos no corpus atual); recuperação dos 5 trechos mais similares após remover redundâncias; temperatura padrão 0,1. O score exibido é a similaridade de cossenos `S_C(q, d) = (q · d) / (||q|| ||d||)`, a Equação (1) do artigo.
 
+**Controle de acesso por setor:** na ingestão, cada trecho recebe o metadado `sector` (inferido por subpasta em `documentos/<setor>/` ou por regra padrão na raiz: `rh`, `ti`, `geral`). Na barra lateral, o seletor **Perfil / Setor de Acesso** restringe a busca vetorial no ChromaDB via filtro nativo por setor (`Administrador`, `RH + Geral`, `TI + Geral` ou `Colaborador Geral`).
+
 ---
 
 ## 4. Prompt de sistema e guardrails
@@ -265,6 +267,6 @@ DocAI/
 - O corpus são três documentos fictícios da "Empresa Exemplo S.A."; a validação é funcional, não um benchmark estatístico.
 - A latência depende do hardware e do tamanho da resposta. O artigo reporta 1,42 s (3B) e 3,65 s (8B); a medição de conferência desta versão está em [docs/HISTORICO_PROJETO.md](docs/HISTORICO_PROJETO.md).
 - A indexação recria a base inteira a cada execução.
-- Não há autenticação nem controle de acesso por perfil.
+- Há segregação lógica por setor via metadados no ChromaDB, mas ainda não há autenticação de usuários nem trilha persistente de auditoria.
 
 Esses pontos correspondem às quatro direções de trabalhos futuros descritas no artigo.
