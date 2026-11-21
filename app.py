@@ -17,12 +17,13 @@ st.markdown("""
     .main-title {
         font-size: 2.2rem;
         font-weight: 700;
-        color: #1E3A8A;
+        color: var(--text-color);
         margin-bottom: 0.2rem;
     }
     .sub-title {
         font-size: 1.05rem;
-        color: #4B5563;
+        color: var(--text-color);
+        opacity: 0.8;
         margin-bottom: 1.5rem;
     }
     .metric-badge {
@@ -36,7 +37,8 @@ st.markdown("""
         margin-right: 0.5rem;
     }
     .source-box {
-        background-color: #F8FAFC;
+        background-color: var(--secondary-background-color);
+        color: var(--text-color);
         border-left: 4px solid #3B82F6;
         padding: 0.75rem;
         border-radius: 0.25rem;
