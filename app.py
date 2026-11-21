@@ -182,6 +182,12 @@ if st.session_state.rag_engine is None:
     )
     # Tenta carregar base existente do disco
     st.session_state.rag_engine.load_existing_vectorstore()
+else:
+    st.session_state.rag_engine.sync_config(
+        ollama_url=ollama_url,
+        llm_model=model_name,
+        embedding_model=embedding_model,
+    )
 
 # Renderiza histórico de mensagens
 for msg in st.session_state.messages:

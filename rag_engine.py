@@ -87,6 +87,31 @@ class RAGEngine:
         self.persist_dir = persist_dir
         self.vectorstore = None
 
+    def sync_config(
+        self,
+        ollama_url: str,
+        llm_model: str,
+        embedding_model: str,
+    ) -> bool:
+        """Sincroniza URL e modelos em memória preservando o vectorstore quando possível.
+
+        Retorna True se o vectorstore precisou ser invalidado (mudança de URL ou
+        modelo de embeddings) e False se apenas o LLM mudou ou nada mudou.
+        """
+        embeddings_changed = (
+            self.ollama_url != ollama_url
+            or self.embedding_model != embedding_model
+        )
+        self.ollama_url = ollama_url
+        self.llm_model = llm_model
+        self.embedding_model = embedding_model
+
+        if embeddings_changed and self.vectorstore is not None:
+            self.vectorstore = None
+            self.load_existing_vectorstore()
+            return True
+        return False
+
     @staticmethod
     def test_connection(ollama_url: str) -> Tuple[bool, str]:
         """Testa se o serviço do Ollama está acessível."""
