@@ -1,6 +1,6 @@
 import os
 import re
-import glob
+from pathlib import Path
 import requests
 from typing import List, Dict, Any, Optional, Tuple
 
@@ -71,6 +71,59 @@ def apply_refusal_guard(answer: str, source_names: List[str]) -> str:
     if cites_source or cites_clause:
         return answer
     return REFUSAL_MESSAGE
+
+
+SUPPORTED_EXTENSIONS: Tuple[str, ...] = (".txt", ".md", ".pdf")
+_ROOT_SECTOR_RULES: Tuple[Tuple[str, str], ...] = (
+    ("politica_de_ferias", "rh"),
+    ("guia_de_beneficios", "rh"),
+    ("manual_ti_e_seguranca", "ti"),
+)
+ACCESS_PROFILES: Dict[str, Optional[List[str]]] = {
+    "Administrador (Todos os setores)": None,
+    "Recursos Humanos (RH + Geral)": ["rh", "geral"],
+    "Tecnologia da Informação (TI + Geral)": ["ti", "geral"],
+    "Colaborador Geral (Apenas Geral)": ["geral"],
+}
+
+
+def infer_sector(file_path: str, docs_dir: Optional[str] = None) -> str:
+    """Infere o setor do documento a partir da subpasta ou do nome do arquivo."""
+    path = Path(file_path)
+
+    if docs_dir is not None:
+        try:
+            rel_parts = path.resolve().relative_to(Path(docs_dir).resolve()).parts
+        except ValueError:
+            rel_parts = Path(os.path.relpath(path, docs_dir)).parts
+        if len(rel_parts) > 1 and rel_parts[0] not in (".", ".."):
+            sector = rel_parts[0].strip().lower()
+            if sector:
+                return sector
+    else:
+        parent_parts = path.parts[:-1]
+        lowered_parents = [part.lower() for part in parent_parts]
+        if "documentos" in lowered_parents:
+            docs_idx = len(lowered_parents) - 1 - lowered_parents[::-1].index("documentos")
+            sub_parts = [
+                p for p in parent_parts[docs_idx + 1 :] if p not in (".", "..")
+            ]
+            if sub_parts:
+                sector = sub_parts[0].strip().lower()
+                if sector:
+                    return sector
+        elif not path.is_absolute():
+            sub_parts = [p for p in parent_parts if p not in (".", "..")]
+            if sub_parts:
+                sector = sub_parts[0].strip().lower()
+                if sector:
+                    return sector
+
+    stem = path.stem.lower()
+    for prefix, sector in _ROOT_SECTOR_RULES:
+        if stem == prefix or stem.startswith(prefix):
+            return sector
+    return "geral"
 
 
 class RAGEngine:
@@ -157,21 +210,49 @@ class RAGEngine:
                 return False
         return False
 
+    @staticmethod
+    def list_documents(docs_dir: str = "./documentos") -> List[Dict[str, str]]:
+        """Lista recursivamente os arquivos suportados em ``docs_dir`` com seu setor."""
+        base = Path(docs_dir)
+        if not base.exists():
+            return []
+
+        entries: List[Dict[str, str]] = []
+        candidates = sorted(
+            (
+                p
+                for p in base.rglob("*")
+                if p.is_file() and p.suffix.lower() in SUPPORTED_EXTENSIONS
+            ),
+            key=lambda p: p.relative_to(base).as_posix().lower(),
+        )
+        for path in candidates:
+            entries.append(
+                {
+                    "path": str(path),
+                    "file_name": path.name,
+                    "relative_path": path.relative_to(base).as_posix(),
+                    "sector": infer_sector(str(path), docs_dir=docs_dir),
+                }
+            )
+        return entries
+
     def load_and_split(self, docs_dir: str = "./documentos") -> List[Any]:
-        """Lê os arquivos (.txt, .md, .pdf) da pasta e devolve a lista de chunks."""
-        files = sorted(glob.glob(os.path.join(docs_dir, "*.*")))
-        supported_files = [f for f in files if f.endswith((".txt", ".md", ".pdf"))]
+        """Lê recursivamente os arquivos (.txt, .md, .pdf) e devolve a lista de chunks."""
+        supported_files = self.list_documents(docs_dir)
 
         documents = []
-        for file_path in supported_files:
-            file_name = os.path.basename(file_path)
+        for entry in supported_files:
+            file_path = entry["path"]
+            file_name = entry["file_name"]
             try:
-                if file_path.endswith(".pdf"):
+                if file_path.lower().endswith(".pdf"):
                     docs = PyPDFLoader(file_path).load()
                 else:
                     docs = TextLoader(file_path, encoding="utf-8").load()
                 for d in docs:
                     d.metadata["source_file"] = file_name
+                    d.metadata["sector"] = entry["sector"]
                 documents.extend(docs)
             except Exception as e:
                 print(f"Erro ao ler {file_name}: {e}")
@@ -189,8 +270,7 @@ class RAGEngine:
         if not os.path.exists(docs_dir):
             os.makedirs(docs_dir, exist_ok=True)
 
-        files = glob.glob(os.path.join(docs_dir, "*.*"))
-        supported_files = [f for f in files if f.endswith((".txt", ".md", ".pdf"))]
+        supported_files = self.list_documents(docs_dir)
 
         if not supported_files:
             return {
@@ -220,17 +300,37 @@ class RAGEngine:
             "success": True,
             "files_count": len(supported_files),
             "chunks_count": len(chunks),
-            "files": [os.path.basename(f) for f in supported_files],
+            "files": [item["file_name"] for item in supported_files],
             "message": f"{len(supported_files)} documentos indexados com sucesso em {len(chunks)} trechos vetoriais!"
         }
 
-    def retrieve(self, question: str, k: int = 5) -> List[Dict[str, Any]]:
+    def retrieve(
+        self,
+        question: str,
+        k: int = 5,
+        allowed_sectors: Optional[List[str]] = None,
+    ) -> List[Dict[str, Any]]:
         """Busca top-k por similaridade de cossenos S_C(q, d), do mais para o menos similar."""
+        search_filter: Optional[Dict[str, Any]] = None
+        if allowed_sectors is not None:
+            normalized_sectors = [
+                s.strip().lower()
+                for s in allowed_sectors
+                if isinstance(s, str) and s.strip()
+            ]
+            if not normalized_sectors:
+                return []
+            search_filter = {"sector": {"$in": normalized_sectors}}
+
         if not self.vectorstore and not self.load_existing_vectorstore():
             return []
 
         # Busca candidatos e deduplica trechos redundantes para garantir diversidade de cláusulas
-        raw_docs = self.vectorstore.similarity_search_with_score(question, k=max(k * 2, 8))
+        raw_docs = self.vectorstore.similarity_search_with_score(
+            question,
+            k=max(k * 2, 8),
+            filter=search_filter,
+        )
         seen_texts = set()
         sources = []
         for doc, distance in raw_docs:
@@ -240,6 +340,7 @@ class RAGEngine:
             seen_texts.add(text_norm)
             sources.append({
                 "doc": doc.metadata.get("source_file", "Documento Interno"),
+                "sector": doc.metadata.get("sector", "geral"),
                 "content": doc.page_content.strip(),
                 # ChromaDB devolve distância de cosseno (1 - S_C); convertemos para similaridade
                 "score": round(1.0 - float(distance), 4),
@@ -254,6 +355,7 @@ class RAGEngine:
         k: int = 5,
         temperature: float = 0.1,
         seed: Optional[int] = None,
+        allowed_sectors: Optional[List[str]] = None,
     ) -> Dict[str, Any]:
         """Realiza a busca vetorial por similaridade e gera a resposta com citação."""
         if not self.vectorstore:
@@ -265,7 +367,13 @@ class RAGEngine:
                     "context": ""
                 }
 
-        sources = self.retrieve(question, k=k)
+        sources = self.retrieve(question, k=k, allowed_sectors=allowed_sectors)
+        if not sources:
+            return {
+                "answer": REFUSAL_MESSAGE,
+                "sources": [],
+                "context": ""
+            }
 
         # Montagem do contexto textual para o prompt
         full_context = "\n\n".join(

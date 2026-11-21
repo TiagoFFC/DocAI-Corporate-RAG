@@ -1,7 +1,7 @@
 import os
 import time
 import streamlit as st
-from rag_engine import RAGEngine
+from rag_engine import ACCESS_PROFILES, RAGEngine
 
 # Configuração da página
 st.set_page_config(
@@ -98,6 +98,12 @@ with st.sidebar:
     )
     
     embedding_model = st.text_input("Modelo Embeddings:", value="nomic-embed-text")
+    selected_profile = st.selectbox(
+        "Perfil / Setor de Acesso:",
+        list(ACCESS_PROFILES.keys()),
+        index=0,
+    )
+    allowed_sectors = ACCESS_PROFILES[selected_profile]
 
     st.divider()
 
@@ -105,10 +111,10 @@ with st.sidebar:
     docs_folder = "./documentos"
     
     if os.path.exists(docs_folder):
-        files = os.listdir(docs_folder)
+        files = RAGEngine.list_documents(docs_folder)
         st.caption(f"📁 **Arquivos disponíveis ({len(files)}):**")
-        for f in files:
-            st.markdown(f"- 📄 `{f}`")
+        for doc in files:
+            st.markdown(f"- 📄 `[{doc['sector'].upper()}]` `{doc['relative_path']}`")
     else:
         st.warning("Pasta ./documentos não encontrada.")
 
@@ -230,7 +236,8 @@ if user_question:
             t_start = time.time()
             result = st.session_state.rag_engine.ask(
                 question=user_question,
-                temperature=temperature
+                temperature=temperature,
+                allowed_sectors=allowed_sectors,
             )
             t_end = time.time()
             latency = t_end - t_start
